@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ABTEVIC Pharmaceutical LTD - Stock Inventory</title>
+    <style>
+        body {
+            background-color: #2ecc71;
+            font-family:Palatino, Times new roman;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color:white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+        }
+        .input-section {
+            margin-bottom: 20px;
+        }
+        .input-group {
+            margin: 10px 0;
+        }
+        input {
+            padding: 16px;
+            margin: 8px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            padding: 8px 16px;
+            margin: 5px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: #3498db;
+            color: white;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .delete-btn {
+            background-color: #e74c3c;
+        }
+        .delete-btn:hover {
+            background-color: #c0392b;
+        }
+        .edit-btn {
+            background-color: #f1c40f;
+        }
+        .edit-btn:hover {
+            background-color: #dab10d;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        .search-section {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ABTEVIC Pharmaceutical LTD - Stock Inventory</h1>
+        
+        <div class="search-section">
+            <input type="text" id="searchInput" placeholder="SEARCH ITEM...">
+            <button onclick="searchItems()">Search</button>
+        </div>
+
+        <div class="input-section">
+            <div class="input-group">
+                <input type="text" id="itemName" placeholder="NAME OF GOODS" required>
+                <input type="number" id="itemAmount" placeholder="AMOUNT (₦)" required min="0">
+                <input type="number" id="itemQuantity" placeholder="QUANTITY" required min="0">
+                <button onclick="addItem()">Add Item</button>
+            </div>
+        </div>
+
+        <table id="inventoryTable">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Amount (₦)</th>
+                    <th>Quantity</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="inventoryBody"></tbody>
+        </table>
+    </div>
+
+    <script>
+        let inventory = JSON.parse(localStorage.getItem('inventory')) || [];
+
+        // Load inventory on page load
+        window.onload = function() {
+            renderInventory();
+        };
+
+        function addItem() {
+            const name = document.getElementById('itemName').value.trim();
+            const amount = parseFloat(document.getElementById('itemAmount').value);
+            const quantity = parseInt(document.getElementById('itemQuantity').value);
+
+            if (name && !isNaN(amount) && !isNaN(quantity)) {
+                const item = {
+                    id: Date.now(),
+                    name: name,
+                    amount: amount,
+                    quantity: quantity
+                };
+
+                inventory.push(item);
+                sortInventory();
+                saveInventory();
+                renderInventory();
+                clearInputs();
+            } else {
+                alert('Please fill all fields with valid data');
+            }
+        }
+
+        function editItem(id) {
+            const item = inventory.find(item => item.id === id);
+            if (item) {
+                const newName = prompt('Enter new name:', item.name);
+                const newAmount = prompt('Enter new amount (₦):', item.amount);
+                const newQuantity = prompt('Enter new quantity:', item.quantity);
+
+                if (newName && !isNaN(newAmount) && !isNaN(newQuantity)) {
+                    item.name = newName.trim();
+                    item.amount = parseFloat(newAmount);
+                    item.quantity = parseInt(newQuantity);
+                    sortInventory();
+                    saveInventory();
+                    renderInventory();
+                }
+            }
+        }
+
+        function deleteItem(id) {
+            if (confirm('Are you sure you want to delete this item?')) {
+                inventory = inventory.filter(item => item.id !== id);
+                saveInventory();
+                renderInventory();
+            }
+        }
+
+        function searchItems() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const filteredInventory = inventory.filter(item => 
+                item.name.toLowerCase().includes(searchTerm)
+            );
+            renderInventory(filteredInventory);
+        }
+
+        function sortInventory() {
+            inventory.sort((a, b) => a.name.localeCompare(b.name));
+        }
+
+        function saveInventory() {
+            localStorage.setItem('inventory', JSON.stringify(inventory));
+        }
+
+        function renderInventory(items = inventory) {
+            const tbody = document.getElementById('inventoryBody');
+            tbody.innerHTML = '';
+
+            items.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.name}</td>
+                    <td>₦${item.amount.toFixed(2)}</td>
+                    <td>${item.quantity}</td>
+                    <td>
+                        <button class="edit-btn" onclick="editItem(${item.id})">EDIT</button>
+                        <button class="delete-btn" onclick="deleteItem(${item.id})">DELETE</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function clearInputs() {
+            document.getElementById('itemName').value = '';
+            document.getElementById('itemAmount').value = '';
+            document.getElementById('itemQuantity').value = '';
+        }
+
+        // Add event listener for search input
+        document.getElementById('searchInput').addEventListener('input', searchItems);
+    </script>
+</body>
+</html>
